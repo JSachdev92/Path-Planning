@@ -122,8 +122,8 @@ int main() {
           bool lc_ra = true; //lane change towards right available
           double warning_time = 2.5; //safety margin to account for amount of space between cars as a time to collision value (adjusts for velocity) for approaching vehicles
           double distance_danger_time = 1.8; //amount of space between cars as a time to collision value 
-          double lc_warning_time = 0.8; // amount of space needed for lane change in terms of time
-          double lc_rel_vel_warning_time = 3; // amount of space needed for lane change in terms of time
+          double lc_warning_time = 1; // amount of space needed for lane change in terms of time
+          double lc_rel_vel_warning_time = 6; // amount of space needed for lane change in terms of time
           car_speed /= 2.237;//convert to m/s
           LaneChangeOccured -= 1.0;
           LaneChangeOccured = std::max(LaneChangeOccured, 0.0);
@@ -286,7 +286,7 @@ int main() {
           }
           
           
-          double T_LA = 1.5; //look ahead time for new points 
+          double T_LA = 1.2; //look ahead time for new points 
           double X_tgt = desired_vel*T_LA;
           double Y_tgt = s(X_tgt);
           double target_dist = sqrt( X_tgt * X_tgt + Y_tgt * Y_tgt);
@@ -296,7 +296,7 @@ int main() {
           double x_step = X_tgt/dist_step;
           double y_step =  Y_tgt/dist_step;
           
-          double step = std::max(x_step, y_step); 
+          double step = x_step;
           double x_cur = 0;
           double x_point, y_point, x_car, y_car;
           
