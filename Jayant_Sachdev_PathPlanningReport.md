@@ -48,9 +48,10 @@ The logic to determine when there was a vehicle acting as an obstacle infront of
 When we have determined that a vehicle ahead is an obstacle, we also adjust our desired velocity to that of the vehicle ahead so we follow at the velocity of the leader vehicle and reduce probability of collision.
 
 The lane change logic was implemted such that we set lane change as available, unless there is a vehicle in the neighboring lane preventing a safe lane change from occuring:
-> **IF** the desired lane is valid and the sensed vehicle is in the desired lane, and the relative velocity of the sensed vehicle would bring it within a danger threshold of distance to our vehicle, **OR IF** the desired lane is valid and the sensed vehicle is in the desired lane, and the position of the sensed vehicle would bring it too close to our vehicle based on our velocity, the prevent lane change to the desired lane.
+> **IF** the desired lane is valid and the sensed vehicle is in the desired lane, and the relative velocity of the sensed vehicle would bring it within a danger threshold of distance to our vehicle, **OR IF** the desired lane is valid and the sensed vehicle is in the desired lane, and the position of the sensed vehicle would bring it too close to our vehicle based on our velocity, the prevent lane change to the desired lane. 
 
-After checking for the obstacles and if the left and right lane change is available, we then make decisions based on the calculated threats and options.
+
+After checking for the obstacles and if the left and right lane change is available, we then make check to see which lane is moving the fastest and then make decisions based on the calculated threats and options.
 
 First, we only act if an obstacle is in the way, otherwise we just continue driving in the current lane at the speed limit. However, if an obstacle is detected, we can then slow down, or change lanes. In order of preference, we first desire to change lanes, and then slow down. The preference is to first change lanes, where we first check the left lane, then the right lane and then slow down. The speed we slow down to is dictated by the speed of the sensed obstacle.
 
@@ -58,7 +59,7 @@ Once we decide on what we want to do: continue at the speed limit in the same la
 
 #### Path Generation
 
-For the path generation, we use the spline tool suggested for the project to generate the path. We start out by taking the last 2 points of the vehicle to anchor the spline and then we add 3 new points to generate a smooth spline that allows continuity in terms of vehicle path.The 3 new points are generated using map waypoints based on the vehicles current position and where we anticpate it will be at 3 look ahead times in the future based on the vehicles desired velocity. Changing the look ahead point as a function of speed allows the generated path to be more dynamic. 
+For the path generation, we use the spline tool suggested for the project to generate the path. We start out by taking the last 2 points of the vehicle to anchor the spline and then we add 3 new points to generate a smooth spline that allows continuity in terms of vehicle path.The 3 new points are generated using map waypoints based on the vehicles current position and where we anticpate it will be at 3 look ahead times in the future based on the vehicles maximum velocity.
 
 We then take the spline and the previous path to send the next points to the controller. We start with all the previous points and then add additional points to send a total of 50 points to the controller. We break down the points such that the x-points are spaced out based on our sample time to track the desired longitudinal velocity. 
 
