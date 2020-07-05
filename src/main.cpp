@@ -17,7 +17,7 @@ using std::string;
 using std::vector;
 
 double ref_vel = 0.0;
-double Max_accel = 7; //set to 4 m/s
+double Max_accel = 5; //set to 5 m/s
 double Max_vel = 49/2.237; //50 mph to m/s conversion for max_vel
 double T_sample = 0.02; // 0.02s iteration time. 
 double desired_vel = Max_vel;
@@ -121,12 +121,14 @@ int main() {
           bool lc_la = true; //lane change towards left available
           bool lc_ra = true; //lane change towards right available
           double warning_time = 2.5; //safety margin to account for amount of space between cars as a time to collision value (adjusts for velocity) for approaching vehicles
-          double distance_danger_time = 1.8; //amount of space between cars as a time to collision value 
-          double lc_warning_time = 1; // amount of space needed for lane change in terms of time
-          double lc_rel_vel_warning_time = 6; // amount of space needed for lane change in terms of time
+          double distance_danger_time = 2; //amount of space between cars as a time to collision value 
+          double lc_warning_time = 1.1; // amount of space needed for lane change in terms of time
+          double lc_rel_vel_warning_time = 7; // amount of space needed for lane change in terms of time
           car_speed /= 2.237;//convert to m/s
           LaneChangeOccured -= 1.0;
           LaneChangeOccured = std::max(LaneChangeOccured, 0.0);
+          double left_lane_vel = Max_vel;
+          double right_lane_vel = Max_vel;
 
           
           // Go through other visible cars tracked by sensor fusion
@@ -156,9 +158,12 @@ int main() {
             int left_lane = lane - 1;
             // if left lane valid and the vehicle is in the left lane, but has more than a calibratable time before collision with my vehicle OR if
             // the new lane car has a high relative velocity to our vehicle which would bring it closer to us in a calibratable threshold then left lane change is not available
-            if( left_lane >= 0 && (check_car_d < (2+4*left_lane+2) && check_car_d > (2+4*left_lane-2))){
+            if( left_lane >= 0 && (check_car_d < (2+4*left_lane+2) && check_car_d > (2+4*left_lane-2))){   
+              if(check_car_s > car_s && ((((check_car_s - car_s)< (2.5*distance_danger_time*(abs(car_speed))))))){
+                 double left_lane_vel = check_car_speed;
+              }
                if((abs(check_car_s - car_s)<abs(lc_warning_time*((car_speed))))||(abs(check_car_s - car_s)<abs(lc_rel_vel_warning_time*((check_car_speed - car_speed))))){
-                lc_la = false;           
+                lc_la = false;               
               }              
             }
             //check if right lane change is available
@@ -166,21 +171,24 @@ int main() {
              // if right lane valid and the vehicle is in the left lane, but has more than a calibratable time before collision with my vehicle OR if
             // the new lane car has a high relative velocity to our vehicle which would bring it closer to us in a calibratable threshold then right lane change is not available
             if( right_lane >= 0 && (check_car_d < (2+4*right_lane+2) && check_car_d > (2+4*right_lane-2))){
+              if(check_car_s > car_s && ((((check_car_s - car_s)< (2.5*distance_danger_time*(abs(car_speed))))))){
+                double right_lane_vel = check_car_speed;
+              }
               if((abs(check_car_s - car_s)<abs(lc_warning_time*((car_speed))))||(abs(check_car_s - car_s)<abs(lc_rel_vel_warning_time*((check_car_speed - car_speed))))){
-                lc_ra = false;             
+                lc_ra = false;     
               }
             }         
           }
             
             if(obstacle == true){ //obstacle detected, either move to left lane, right lane, or slow down  
               //first check if you are in middle or right lane and left lane change is availabe, do lane change if right lane change is not available and we did not do a lane change in last 3 seconds
-              if(lane >0 && lc_la && !lc_ra && LaneChangeOccured == 0.0){ 
+              if(lane >0 && lc_la && (left_lane_vel>right_lane_vel) && (left_lane_vel>desired_vel) && LaneChangeOccured == 0.0){ 
                 lane -= 1;
                 ref_vel -= dV_max;
                 LaneChangeOccured = 3.0/T_sample;
               }
               //then check if you are in left or middle lane and right lane change is availabe, do lane change if left lane change is not available and we did not do a lane change in last 3 seconds   
-              else if (lane <2 && lc_ra &&  !lc_la && LaneChangeOccured == 0.0){
+              else if (lane <2 && lc_ra  && (right_lane_vel>left_lane_vel) && (right_lane_vel>desired_vel) && LaneChangeOccured == 0.0){
                 lane += 1;
                 ref_vel -= dV_max; 
                 LaneChangeOccured = 3.0/T_sample;                
@@ -245,15 +253,15 @@ int main() {
 		  }
           // Setting up target points in the future as a function of LA time
 
-          double T_LA_1 = 2.5; // 1s Look ahead point for target point 1.
+          double T_LA_1 = 2.2; // 1s Look ahead point for target point 1.
           double T_LA_2 = 4; // 2.5s Look ahead point for target point 2.
-          double T_LA_3 = 5; // 5 s Look ahead point for target point 3.
+          double T_LA_3 = 6; // 5 s Look ahead point for target point 3.
 
           
           
-          vector<double> wp0 = getXY(car_s + desired_vel*T_LA_1, (2 + 4*lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);//desired_vel*T_LA_1
-          vector<double> wp1 = getXY(car_s + desired_vel*T_LA_2, (2 + 4*lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);//desired_vel*T_LA_2
-          vector<double> wp2 = getXY(car_s + desired_vel*T_LA_3, (2 + 4*lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);//desired_vel*T_LA_3
+          vector<double> wp0 = getXY(car_s + Max_vel*T_LA_1, (2 + 4*lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);//desired_vel*T_LA_1
+          vector<double> wp1 = getXY(car_s + Max_vel*T_LA_2, (2 + 4*lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);//desired_vel*T_LA_2
+          vector<double> wp2 = getXY(car_s + Max_vel*T_LA_3, (2 + 4*lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);//desired_vel*T_LA_3
 
           xpts.push_back(wp0[0]);
           xpts.push_back(wp1[0]);
@@ -286,8 +294,8 @@ int main() {
           }
           
           
-          double T_LA = 1.2; //look ahead time for new points 
-          double X_tgt = desired_vel*T_LA;
+          double T_LA = 1.5; //look ahead time for new points 
+          double X_tgt = Max_vel*T_LA;
           double Y_tgt = s(X_tgt);
           double target_dist = sqrt( X_tgt * X_tgt + Y_tgt * Y_tgt);
 
